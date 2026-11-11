@@ -194,7 +194,7 @@ export default function ReportsPage() {
                   <ResponsiveContainer width="100%" height={260}>
                     <LineChart
                       data={chartData}
-                      margin={{ top: 5, right: 24, left: 0, bottom: 5 }}
+                      margin={{ top: 10, right: 20, left: 0, bottom: 5 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                       <XAxis dataKey="label" tick={{ fontSize: 11 }} />
@@ -209,13 +209,23 @@ export default function ReportsPage() {
                         y={70}
                         stroke="#3b82f6"
                         strokeDasharray="4 4"
-                        label={{ value: 'Low (70)', position: 'right', fontSize: 10 }}
+                        label={{
+                          value: 'Low (70)',
+                          position: 'insideTopRight',
+                          fill: '#3b82f6',
+                          fontSize: 10,
+                        }}
                       />
                       <ReferenceLine
                         y={140}
                         stroke="#f59e0b"
                         strokeDasharray="4 4"
-                        label={{ value: 'Target (140)', position: 'right', fontSize: 10 }}
+                        label={{
+                          value: 'Target (140)',
+                          position: 'insideTopRight',
+                          fill: '#d97706',
+                          fontSize: 10,
+                        }}
                       />
                       <Line
                         type="monotone"
