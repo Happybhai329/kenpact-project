@@ -1,0 +1,283 @@
+import { useState, useEffect } from 'react';
+import api from '../api/axios';
+import toast from 'react-hot-toast';
+import Navbar from '../components/Navbar';
+import { formatReadingDate, getLocalTodayString } from '../utils/date';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+} from 'recharts';
+
+const SLOT_LABELS = {
+  morning_fasting: 'Morning (fasting)',
+  after_breakfast: 'After breakfast',
+  after_lunch: 'After lunch',
+  after_dinner: 'After dinner',
+};
+
+const SLOT_SHORT = {
+  morning_fasting: 'Fasting',
+  after_breakfast: 'Breakfast',
+  after_lunch: 'Lunch',
+  after_dinner: 'Dinner',
+};
+
+function StatCard({ label, value, unit = 'mg/dl', color = 'sky' }) {
+  const colorMap = {
+    sky: 'text-sky-600',
+    green: 'text-green-600',
+    red: 'text-red-600',
+    orange: 'text-orange-600',
+  };
+  if (value === null || value === undefined) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+        <p className="text-gray-400 text-sm">{label}</p>
+        <p className="text-gray-300 text-2xl font-bold mt-1">—</p>
+      </div>
+    );
+  }
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+      <p className="text-gray-500 text-sm">{label}</p>
+      <p className={`text-2xl font-bold mt-1 ${colorMap[color]}`}>{value}</p>
+      <p className="text-xs text-gray-400 mt-0.5">{unit}</p>
+    </div>
+  );
+}
+
+export default function ReportsPage() {
+  const todayStr = getLocalTodayString();
+  const [reportType, setReportType] = useState('daily');
+  const [date, setDate] = useState(todayStr);
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchReport = async () => {
+      setLoading(true);
+      try {
+        const endpoint =
+          reportType === 'daily'
+            ? '/reports/daily'
+            : reportType === 'mtd'
+            ? '/reports/month-to-date'
+            : '/reports/monthly';
+        const res = await api.get(`${endpoint}?date=${date}`);
+        setReport(res.data.data);
+      } catch {
+        toast.error('Failed to load report');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReport();
+  }, [reportType, date]);
+
+  const chartData =
+    report?.readings?.map((r) => ({
+      label:
+        reportType === 'daily'
+          ? SLOT_SHORT[r.slot]
+          : formatReadingDate(r.date, { day: 'numeric', month: 'short' }),
+      fullLabel: `${formatReadingDate(r.date, {
+        day: 'numeric',
+        month: 'short',
+      })} · ${SLOT_LABELS[r.slot]}`,
+      value: r.value,
+    })) || [];
+
+  const rangeText = report
+    ? report.startDate === report.endDate
+      ? formatReadingDate(report.startDate)
+      : `${formatReadingDate(report.startDate)} – ${formatReadingDate(
+          report.endDate
+        )}`
+    : '';
+
+  return (
+    <>
+      <Navbar />
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Analyze your glucose trends over daily, month-to-date, and monthly windows
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-wrap gap-4 items-center justify-between">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex gap-2">
+              {[
+                { key: 'daily', label: 'Daily' },
+                { key: 'mtd', label: 'Month-to-Date' },
+                { key: 'monthly', label: 'Monthly (Prev Month)' },
+              ].map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setReportType(t.key)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    reportType === t.key
+                      ? 'bg-sky-500 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <input
+              type="date"
+              aria-label="Report reference date"
+              value={date}
+              max={todayStr}
+              onChange={(e) => setDate(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-400 text-sm"
+            />
+          </div>
+          {rangeText && (
+            <span className="text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">
+              Range: {rangeText}
+            </span>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="text-center py-16 text-gray-400">
+            Loading report...
+          </div>
+        ) : report?.count === 0 ? (
+          <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+            <div className="text-5xl mb-3">📊</div>
+            <h3 className="text-lg font-semibold text-gray-700">
+              No readings found
+            </h3>
+            <p className="text-gray-500 mt-1">
+              No glucose readings recorded for {rangeText || 'this period'}.
+            </p>
+          </div>
+        ) : (
+          report && (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <StatCard
+                  label="Readings"
+                  value={report.count}
+                  unit="total"
+                  color="sky"
+                />
+                <StatCard
+                  label="Average"
+                  value={
+                    report.avg !== null ? Number(report.avg).toFixed(1) : null
+                  }
+                  color="orange"
+                />
+                <StatCard label="Highest" value={report.max} color="red" />
+                <StatCard label="Lowest" value={report.min} color="green" />
+              </div>
+
+              {chartData.length > 1 && (
+                <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+                  <h3 className="text-base font-semibold text-gray-900 mb-4">
+                    Glucose Trend
+                  </h3>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <LineChart
+                      data={chartData}
+                      margin={{ top: 5, right: 24, left: 0, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                      <YAxis domain={[40, 'auto']} tick={{ fontSize: 11 }} />
+                      <Tooltip
+                        labelFormatter={(_, payload) =>
+                          payload?.[0]?.payload?.fullLabel || ''
+                        }
+                        formatter={(v) => [`${v} mg/dl`, 'Glucose']}
+                      />
+                      <ReferenceLine
+                        y={70}
+                        stroke="#3b82f6"
+                        strokeDasharray="4 4"
+                        label={{ value: 'Low (70)', position: 'right', fontSize: 10 }}
+                      />
+                      <ReferenceLine
+                        y={140}
+                        stroke="#f59e0b"
+                        strokeDasharray="4 4"
+                        label={{ value: 'Target (140)', position: 'right', fontSize: 10 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#0ea5e9"
+                        strokeWidth={2}
+                        dot={{ r: 4, fill: '#0ea5e9' }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              <div className="bg-white rounded-xl border border-gray-200">
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900">
+                    Reading Details
+                  </h3>
+                  <span className="text-xs text-gray-500">
+                    {report.readings.length}{' '}
+                    {report.readings.length === 1 ? 'entry' : 'entries'}
+                  </span>
+                </div>
+                <div className="divide-y divide-gray-100">
+                  {report.readings.map((r) => (
+                    <div
+                      key={r.id}
+                      className="p-4 flex justify-between items-center"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {SLOT_LABELS[r.slot]}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {formatReadingDate(r.date, {
+                            weekday: 'short',
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </p>
+                      </div>
+                      <span
+                        className={`font-bold ${
+                          r.value < 70
+                            ? 'text-blue-600'
+                            : r.value <= 140
+                            ? 'text-green-600'
+                            : r.value <= 200
+                            ? 'text-amber-600'
+                            : 'text-red-600'
+                        }`}
+                      >
+                        {r.value} mg/dl
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )
+        )}
+      </div>
+    </>
+  );
+}
