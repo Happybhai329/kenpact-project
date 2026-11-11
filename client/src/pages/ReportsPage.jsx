@@ -138,7 +138,9 @@ export default function ReportsPage() {
               aria-label="Report reference date"
               value={date}
               max={todayStr}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => {
+                if (e.target.value) setDate(e.target.value);
+              }}
               className="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-400 text-sm"
             />
           </div>

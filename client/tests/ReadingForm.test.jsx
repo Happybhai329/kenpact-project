@@ -117,4 +117,37 @@ describe('ReadingForm', () => {
       )
     ).toBeInTheDocument();
   });
+
+  it('edits an existing reading via PUT and calls onSuccess', async () => {
+    const user = userEvent.setup();
+    api.put.mockResolvedValueOnce({ data: { status: 'success' } });
+    const existing = {
+      id: 42,
+      date: '2026-11-10T00:00:00.000Z',
+      slot: 'morning_fasting',
+      value: 95,
+    };
+
+    render(
+      <ReadingForm
+        reading={existing}
+        onSuccess={onSuccess}
+        onCancel={onCancel}
+      />
+    );
+
+    const valueInput = screen.getByLabelText(/value \(mg\/dl\)/i);
+    await user.clear(valueInput);
+    await user.type(valueInput, '104');
+    await user.click(screen.getByRole('button', { name: /update/i }));
+
+    await waitFor(() => {
+      expect(api.put).toHaveBeenCalledWith('/readings/42', {
+        date: '2026-11-10',
+        slot: 'morning_fasting',
+        value: 104,
+      });
+      expect(onSuccess).toHaveBeenCalled();
+    });
+  });
 });
