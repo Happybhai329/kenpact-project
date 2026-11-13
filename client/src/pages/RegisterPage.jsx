@@ -4,6 +4,19 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 
+const getPasswordStrength = (pwd) => {
+  if (!pwd) return { score: 0, label: '', color: 'bg-gray-200' };
+  let score = 0;
+  if (pwd.length >= 6) score++;
+  if (pwd.length >= 8) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[^A-Za-z0-9]/.test(pwd)) score++;
+  if (score <= 1) return { score: 1, label: 'Weak', color: 'bg-red-400', textColor: 'text-red-600' };
+  if (score === 2) return { score: 2, label: 'Fair', color: 'bg-amber-400', textColor: 'text-amber-600' };
+  if (score === 3) return { score: 3, label: 'Good', color: 'bg-sky-500', textColor: 'text-sky-600' };
+  return { score: 4, label: 'Strong', color: 'bg-green-500', textColor: 'text-green-600' };
+};
+
 export default function RegisterPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -82,6 +95,28 @@ export default function RegisterPage() {
                   errors[key] ? 'border-red-400 bg-red-50' : 'border-gray-300'
                 } focus:outline-none focus:ring-2 focus:ring-sky-400`}
               />
+              {key === 'password' && form.password && (
+                <div className="mt-1.5">
+                  <div className="flex items-center justify-between text-[11px] mb-1">
+                    <span className="text-gray-500">Strength:</span>
+                    <span className={`font-semibold ${getPasswordStrength(form.password).textColor}`}>
+                      {getPasswordStrength(form.password).label}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1">
+                    {[1, 2, 3, 4].map((step) => (
+                      <div
+                        key={step}
+                        className={`h-1 rounded-full transition-colors ${
+                          step <= getPasswordStrength(form.password).score
+                            ? getPasswordStrength(form.password).color
+                            : 'bg-gray-200'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
               {errors[key] && (
                 <p className="text-red-500 text-xs mt-1">{errors[key]}</p>
               )}

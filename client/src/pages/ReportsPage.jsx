@@ -3,6 +3,8 @@ import api from '../api/axios';
 import toast from 'react-hot-toast';
 import Navbar from '../components/Navbar';
 import { formatReadingDate, getLocalTodayString } from '../utils/date';
+import { StatCardSkeleton, ChartSkeleton } from '../components/Skeleton';
+import { exportReadingsToCsv } from '../utils/exportCsv';
 import {
   LineChart,
   Line,
@@ -144,16 +146,39 @@ export default function ReportsPage() {
               className="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-400 text-sm"
             />
           </div>
-          {rangeText && (
-            <span className="text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">
-              Range: {rangeText}
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {rangeText && (
+              <span className="text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">
+                Range: {rangeText}
+              </span>
+            )}
+            {report?.readings?.length > 0 && (
+              <button
+                type="button"
+                onClick={() =>
+                  exportReadingsToCsv(
+                    report.readings,
+                    `sweety-report-${reportType}-${date}.csv`
+                  )
+                }
+                className="text-xs font-medium bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
+                title="Download report as CSV spreadsheet"
+              >
+                <span>📥</span> Export CSV
+              </button>
+            )}
+          </div>
         </div>
 
         {loading ? (
-          <div className="text-center py-16 text-gray-400">
-            Loading report...
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </div>
+            <ChartSkeleton />
           </div>
         ) : report?.count === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">

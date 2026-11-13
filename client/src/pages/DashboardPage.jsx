@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import ReadingForm from '../components/ReadingForm';
 import ReadingCard from '../components/ReadingCard';
 import Navbar from '../components/Navbar';
+import { ReadingCardSkeleton } from '../components/Skeleton';
 import { getLocalTodayString, toDateInputString } from '../utils/date';
 
 const SLOT_LABELS = {
@@ -147,8 +148,10 @@ export default function DashboardPage() {
         )}
 
         {loading ? (
-          <div className="text-center py-16 text-gray-400">
-            Loading readings...
+          <div className="space-y-3">
+            <ReadingCardSkeleton />
+            <ReadingCardSkeleton />
+            <ReadingCardSkeleton />
           </div>
         ) : readings.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
@@ -162,6 +165,25 @@ export default function DashboardPage() {
           </div>
         ) : (
           <>
+            {/* Glucose Target Range Reference Legend */}
+            <div className="mb-4 bg-gray-50 border border-gray-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="text-gray-500 font-medium">Glucose Ranges:</span>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-1.5 text-blue-700 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-blue-500"></span> Low (&lt;70)
+                </span>
+                <span className="flex items-center gap-1.5 text-green-700 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-green-500"></span> Normal (70–140)
+                </span>
+                <span className="flex items-center gap-1.5 text-amber-700 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-amber-500"></span> Elevated (141–200)
+                </span>
+                <span className="flex items-center gap-1.5 text-red-700 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-red-500"></span> High (&gt;200)
+                </span>
+              </div>
+            </div>
+
             <div className="space-y-3">
               {readings.map((r) => (
                 <ReadingCard

@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const AppError = require('./utils/AppError');
 const errorHandler = require('./middleware/errorHandler');
+const { authLimiter, apiLimiter } = require('./middleware/rateLimiter');
 
 const authRoutes = require('./modules/auth/auth.routes');
 const readingsRoutes = require('./modules/readings/readings.routes');
@@ -22,6 +23,12 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 app.use(express.json());
+
+// Rate limiting
+if (process.env.NODE_ENV !== 'test') {
+  app.use('/api/', apiLimiter);
+  app.use('/api/auth', authLimiter);
+}
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/auth', authRoutes);
