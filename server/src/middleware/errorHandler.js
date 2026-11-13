@@ -14,8 +14,6 @@ const errorHandler = (err, req, res, next) => {
   res.status(statusCode).json({
     status: 'error',
     message: err.message || 'Internal server error',
-    prismaCode: err.code,
-    prismaMeta: err.meta,
   });
 };
 

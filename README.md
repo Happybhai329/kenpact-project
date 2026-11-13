@@ -6,6 +6,18 @@ Built with **Node.js + Express 5**, **PostgreSQL (Prisma ORM)**, and **React 19 
 
 ---
 
+## 🌐 Live Demo
+
+- **Frontend Web App:** [https://sweety-tracker.onrender.com](https://sweety-tracker.onrender.com)
+- **Backend API:** [https://sweety-api-9v7t.onrender.com/api/health](https://sweety-api-9v7t.onrender.com/api/health)
+
+### Quick Demo Credentials
+- **Email:** `demo@sweety.com`
+- **Password:** `demo1234`
+*(Or click the **Fill Demo** button on the login screen for 1-click access)*
+
+---
+
 ## Features
 
 ### Required Core Features
