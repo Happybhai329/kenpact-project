@@ -20,7 +20,7 @@ const register = async ({ name, email, password }) => {
     throw new AppError('Email already registered', 409);
   }
 
-  const hashedPassword = await bcrypt.hash(password, 12);
+  const hashedPassword = await bcrypt.hash(password, 10);
   const user = await prisma.user.create({
     data: {
       name: normalizedName,
@@ -40,6 +40,7 @@ const login = async ({ email, password }) => {
   const normalizedEmail = email.trim().toLowerCase();
   const user = await prisma.user.findUnique({
     where: { email: normalizedEmail },
+    select: { id: true, name: true, email: true, password: true },
   });
   if (!user) {
     throw new AppError('Invalid email or password', 401);

@@ -7,7 +7,9 @@ const PORT = process.env.PORT || 5000;
 const start = async () => {
   try {
     await prisma.$connect();
-    console.log('✅ Database connected');
+    // Warm up the pool so first user queries don't suffer connection/TLS latency
+    await pool.query('SELECT 1');
+    console.log('✅ Database connected and connection pool warmed');
     const server = app.listen(PORT, () =>
       console.log(`🚀 Server running on http://localhost:${PORT}`)
     );

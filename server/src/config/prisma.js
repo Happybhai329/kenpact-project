@@ -12,6 +12,10 @@ const isLocal =
 const pool = new Pool({
   connectionString,
   ssl: isLocal ? undefined : { rejectUnauthorized: false },
+  max: 10,
+  min: 2, // Keep 2 warm connections alive to avoid TLS handshake on requests
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 8000,
 });
 
 const adapter = new PrismaPg(pool);

@@ -9,6 +9,7 @@ import { AuthProvider } from '../src/context/AuthContext';
 vi.mock('../src/api/axios', () => ({
   default: {
     post: vi.fn(),
+    get: vi.fn().mockResolvedValue({ data: { status: 'ok' } }),
   },
 }));
 
