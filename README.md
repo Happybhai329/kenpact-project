@@ -32,6 +32,7 @@ Built with **Node.js + Express 5**, **PostgreSQL (Prisma ORM)**, and **React 19 
 - **Reports:** Daily, Month-to-Date (1st of month to selected date), and Monthly (full previous calendar month) summaries showing reading count, highest, lowest, average (rounded to 1 decimal), friendly empty states, and daily slot breakdown.
 
 ### Bonus Features Implemented
+- ✨ **AI Clinical Insights & Decision Support:** Powered by **Google Gemini 2.5 Flash** (with fallback to an intelligent deterministic clinical rule engine). Evaluates glycemic stability, identifies clinical patterns (Dawn Phenomenon, post-meal spikes, hypoglycemia risks), calculates Time in Range (TIR), and generates targeted questions for physician consultations based on American Diabetes Association (ADA) guidelines.
 - 🐳 **Docker & Docker Compose:** Multi-stage Dockerfiles for client (Nginx) & server + `docker-compose.yml` for 1-command startup.
 - 📄 **Pagination** on `GET /api/readings?page=1&limit=20` with page metadata.
 - 📈 **Interactive Trend Charts** using Recharts with low (`70 mg/dl`) and target (`140 mg/dl`) clinical reference lines.
@@ -40,9 +41,9 @@ Built with **Node.js + Express 5**, **PostgreSQL (Prisma ORM)**, and **React 19 
 - 🚦 **Password Strength Indicator:** Real-time visual entropy meter on registration.
 - 🧱 **Error Boundary & Skeleton Loaders:** React 19 Error Boundary for graceful crash handling and pulse skeletons for loading states.
 - 📱 **Responsive Navbar:** Sticky navbar with active route indicators and mobile collapsible menu.
-- 🧪 **Comprehensive Automated Tests (50 Tests Total):**
-  - **23 Backend Integration Tests** (`node --test` + Supertest) covering health, auth, full CRUD, all 5 business validation rules, pagination, boundary conditions, and report aggregations.
-  - **27 Frontend Component Tests** (Vitest + React Testing Library) covering `ReadingForm`, `ReadingCard`, `LoginPage`, `RegisterPage`, and `Navbar`.
+- 🧪 **Comprehensive Automated Tests (55 Tests Total):**
+  - **26 Backend Integration Tests** (`node --test` + Supertest) covering health, auth, full CRUD, all 5 business validation rules, pagination, boundary conditions, report aggregations, and AI endpoints.
+  - **29 Frontend Component Tests** (Vitest + React Testing Library) covering `AiInsightsCard`, `ReadingForm`, `ReadingCard`, `LoginPage`, `RegisterPage`, and `Navbar`.
 - ⚡ **Optimized Vendor Code-Splitting:** Custom Rolldown chunking for React core and Recharts with zero oversized chunk warnings.
 
 ---
@@ -51,11 +52,12 @@ Built with **Node.js + Express 5**, **PostgreSQL (Prisma ORM)**, and **React 19 
 
 | Layer | Technology |
 |---|---|
+| AI Engine | Google Gemini 2.5 Flash API + ADA Clinical Decision Support Rule Engine |
 | Frontend | React 19, Vite 8, React Router 7, Tailwind CSS v4, Recharts, Axios, react-hot-toast |
 | Backend | Node.js, Express 5, express-validator, express-rate-limit, JWT, bcryptjs, Helmet, Morgan |
 | Database | PostgreSQL (Supabase) + Prisma ORM (`@prisma/adapter-pg` + `pg` pool) |
 | Container | Docker + Docker Compose + Nginx Alpine |
-| Testing | Node Test Runner + Supertest (server: 23 tests), Vitest + React Testing Library (client: 27 tests) |
+| Testing | Node Test Runner + Supertest (server: 26 tests), Vitest + React Testing Library (client: 29 tests) |
 
 ---
 
@@ -196,14 +198,14 @@ After running `npm run db:seed`, you can log in immediately with:
 
 ## Running Tests
 
-Sweety includes **50 automated tests** across both backend and frontend:
+Sweety includes **55 automated tests** across both backend and frontend:
 
 ```bash
-# Run backend tests (23 tests: auth, CRUD, validation rules, reports, pagination)
+# Run backend tests (26 tests: auth, CRUD, validation rules, reports, pagination, AI clinical insights)
 cd server
 npm test
 
-# Run frontend tests (27 tests: ReadingForm, ReadingCard, LoginPage, RegisterPage, Navbar)
+# Run frontend tests (29 tests: AiInsightsCard, ReadingForm, ReadingCard, LoginPage, RegisterPage, Navbar)
 cd ../client
 npm test
 ```
@@ -225,6 +227,7 @@ npm test
 | `GET` | `/api/reports/daily?date=YYYY-MM-DD` | Yes | Daily summary + slot breakdown |
 | `GET` | `/api/reports/month-to-date?date=YYYY-MM-DD` | Yes | 1st of month through selected date |
 | `GET` | `/api/reports/monthly?date=YYYY-MM-DD` | Yes | Full previous calendar month summary |
+| `GET` | `/api/ai/insights?type=daily&date=YYYY-MM-DD` | Yes | AI Clinical Decision Support Insights (Gemini 2.5 Flash + Fallback) |
 
 ---
 

@@ -9,6 +9,7 @@ const { authLimiter, apiLimiter } = require('./middleware/rateLimiter');
 const authRoutes = require('./modules/auth/auth.routes');
 const readingsRoutes = require('./modules/readings/readings.routes');
 const reportsRoutes = require('./modules/reports/reports.routes');
+const aiRoutes = require('./modules/ai/ai.routes');
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/readings', readingsRoutes);
 app.use('/api/reports', reportsRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.use((req, res, next) => {
   next(new AppError(`Route ${req.originalUrl} not found`, 404));

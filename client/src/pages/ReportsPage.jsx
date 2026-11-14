@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 import Navbar from '../components/Navbar';
+import AiInsightsCard from '../components/AiInsightsCard';
 import { formatReadingDate, getLocalTodayString } from '../utils/date';
 import { StatCardSkeleton, ChartSkeleton } from '../components/Skeleton';
 import { exportReadingsToCsv } from '../utils/exportCsv';
@@ -193,6 +194,9 @@ export default function ReportsPage() {
         ) : (
           report && (
             <>
+              {/* AI Clinical Insights Engine */}
+              <AiInsightsCard reportType={reportType} date={date} />
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <StatCard
                   label="Readings"
