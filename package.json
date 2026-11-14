@@ -1,0 +1,13 @@
+{
+  "name": "sweety-project",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sweety - Full-Stack Blood Glucose Tracker with AI Insights",
+  "scripts": {
+    "test": "npm run test:server && npm run test:client",
+    "test:server": "npm --prefix server test",
+    "test:client": "npm --prefix client test -- --run",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev"
+  }
+}
