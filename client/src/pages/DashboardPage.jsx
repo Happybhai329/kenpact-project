@@ -5,7 +5,11 @@ import ReadingForm from '../components/ReadingForm';
 import ReadingCard from '../components/ReadingCard';
 import Navbar from '../components/Navbar';
 import { ReadingCardSkeleton } from '../components/Skeleton';
-import { getLocalTodayString, toDateInputString } from '../utils/date';
+import {
+  getLocalTodayString,
+  toDateInputString,
+  shiftDays,
+} from '../utils/date';
 
 const SLOT_LABELS = {
   morning_fasting: 'Morning (fasting)',
@@ -25,14 +29,19 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editReading, setEditReading] = useState(null);
+  const [filterDate, setFilterDate] = useState('');
 
   const todayStr = getLocalTodayString();
+  const yesterdayStr = shiftDays(todayStr, -1);
 
   const fetchReadings = useCallback(async () => {
     setLoading(true);
     try {
+      const listUrl = filterDate
+        ? `/readings?page=${page}&limit=10&date=${filterDate}`
+        : `/readings?page=${page}&limit=10`;
       const [listRes, todayRes] = await Promise.all([
-        api.get(`/readings?page=${page}&limit=10`),
+        api.get(listUrl),
         api.get(`/readings?date=${todayStr}&limit=4`),
       ]);
       setReadings(listRes.data.data.readings);
@@ -44,7 +53,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, todayStr]);
+  }, [page, filterDate, todayStr]);
 
   useEffect(() => {
     fetchReadings();
@@ -147,6 +156,108 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* Date Filter Bar */}
+        <div className="mb-4 bg-white border border-gray-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-gray-700">Filter Date:</span>
+            <button
+              type="button"
+              onClick={() => {
+                setFilterDate('');
+                setPage(1);
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+                !filterDate
+                  ? 'bg-sky-500 text-white shadow-xs'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              All Dates
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setFilterDate(todayStr);
+                setPage(1);
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+                filterDate === todayStr
+                  ? 'bg-sky-500 text-white shadow-xs'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setFilterDate(yesterdayStr);
+                setPage(1);
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+                filterDate === yesterdayStr
+                  ? 'bg-sky-500 text-white shadow-xs'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Yesterday
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setFilterDate('2026-11-12');
+                setPage(1);
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1 ${
+                filterDate === '2026-11-12'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+              }`}
+            >
+              <span>📊</span> 12 Nov
+            </button>
+
+            <div className="relative">
+              <input
+                type="date"
+                aria-label="Filter readings by custom date"
+                value={filterDate}
+                max={todayStr}
+                onClick={(e) => {
+                  try {
+                    e.target.showPicker?.();
+                  } catch {}
+                }}
+                onChange={(e) => {
+                  setFilterDate(e.target.value);
+                  setPage(1);
+                }}
+                className="px-2.5 py-1 rounded-lg border border-gray-300 bg-white hover:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400 text-xs font-medium cursor-pointer shadow-xs"
+              />
+            </div>
+
+            {filterDate && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterDate('');
+                  setPage(1);
+                }}
+                className="text-xs text-red-600 hover:text-red-700 font-medium px-2 py-1 rounded bg-red-50 hover:bg-red-100 transition"
+                title="Clear date filter"
+              >
+                ✕ Clear
+              </button>
+            )}
+          </div>
+
+          {filterDate && (
+            <span className="text-xs text-sky-700 bg-sky-50 border border-sky-100 px-2.5 py-1 rounded-lg font-medium">
+              Filter: <strong>{filterDate}</strong> ({total} recorded)
+            </span>
+          )}
+        </div>
+
         {loading ? (
           <div className="space-y-3">
             <ReadingCardSkeleton />
@@ -154,15 +265,37 @@ export default function DashboardPage() {
             <ReadingCardSkeleton />
           </div>
         ) : readings.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-            <div className="text-5xl mb-3">📋</div>
-            <h3 className="text-lg font-semibold text-gray-700">
-              No readings yet
-            </h3>
-            <p className="text-gray-500 mt-1">
-              Add your first blood glucose reading to get started.
-            </p>
-          </div>
+          filterDate ? (
+            <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
+              <div className="text-4xl mb-3">🔍</div>
+              <h3 className="text-base font-semibold text-gray-800">
+                No readings found for {filterDate}
+              </h3>
+              <p className="text-gray-500 text-xs mt-1 mb-4">
+                Try picking another date or view all recorded readings.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterDate('');
+                  setPage(1);
+                }}
+                className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold rounded-lg transition"
+              >
+                Show All Readings
+              </button>
+            </div>
+          ) : (
+            <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+              <div className="text-5xl mb-3">📋</div>
+              <h3 className="text-lg font-semibold text-gray-700">
+                No readings yet
+              </h3>
+              <p className="text-gray-500 mt-1">
+                Add your first blood glucose reading to get started.
+              </p>
+            </div>
+          )
         ) : (
           <>
             {/* Glucose Target Range Reference Legend */}

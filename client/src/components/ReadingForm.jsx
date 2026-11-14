@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
-import { getLocalTodayString, toDateInputString } from '../utils/date';
+import {
+  getLocalTodayString,
+  toDateInputString,
+  shiftDays,
+} from '../utils/date';
 
 const SLOTS = [
   { value: 'morning_fasting', label: 'Morning (fasting)' },
@@ -13,6 +17,8 @@ const SLOTS = [
 export default function ReadingForm({ reading, onSuccess, onCancel }) {
   const isEdit = !!reading;
   const todayStr = getLocalTodayString();
+  const yesterdayStr = shiftDays(todayStr, -1);
+  const twoDaysAgoStr = shiftDays(todayStr, -2);
 
   const [form, setForm] = useState({
     date: reading ? toDateInputString(reading.date) : todayStr,
@@ -97,22 +103,68 @@ export default function ReadingForm({ reading, onSuccess, onCancel }) {
         className="grid grid-cols-1 md:grid-cols-3 gap-4"
       >
         <div>
-          <label
-            htmlFor="reading-date"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Date
-          </label>
-          <input
-            id="reading-date"
-            type="date"
-            value={form.date}
-            max={todayStr}
-            onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
-            className={`w-full px-3 py-2 rounded-lg border ${
-              errors.date ? 'border-red-400 bg-red-50' : 'border-gray-300'
-            } focus:outline-none focus:ring-2 focus:ring-sky-400`}
-          />
+          <div className="flex items-center justify-between mb-1">
+            <label
+              htmlFor="reading-date"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Date
+            </label>
+            <span className="text-[11px] text-gray-400">Click to open calendar</span>
+          </div>
+          <div className="relative">
+            <input
+              id="reading-date"
+              type="date"
+              value={form.date}
+              max={todayStr}
+              onClick={(e) => {
+                try {
+                  e.target.showPicker?.();
+                } catch {}
+              }}
+              onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
+              className={`w-full px-3 py-2 rounded-lg border cursor-pointer ${
+                errors.date ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white hover:border-sky-400'
+              } focus:outline-none focus:ring-2 focus:ring-sky-400 text-sm`}
+            />
+          </div>
+          <div className="flex items-center gap-1.5 mt-1.5 text-xs">
+            <span className="text-[11px] text-gray-400 font-medium">Quick:</span>
+            <button
+              type="button"
+              onClick={() => setForm((p) => ({ ...p, date: todayStr }))}
+              className={`px-2 py-0.5 rounded transition text-[11px] ${
+                form.date === todayStr
+                  ? 'bg-sky-600 text-white font-medium shadow-xs'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm((p) => ({ ...p, date: yesterdayStr }))}
+              className={`px-2 py-0.5 rounded transition text-[11px] ${
+                form.date === yesterdayStr
+                  ? 'bg-sky-600 text-white font-medium shadow-xs'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Yesterday
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm((p) => ({ ...p, date: twoDaysAgoStr }))}
+              className={`px-2 py-0.5 rounded transition text-[11px] ${
+                form.date === twoDaysAgoStr
+                  ? 'bg-sky-600 text-white font-medium shadow-xs'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              2d ago
+            </button>
+          </div>
           {errors.date && (
             <p className="text-red-500 text-xs mt-1">{errors.date}</p>
           )}

@@ -3,7 +3,12 @@ import api from '../api/axios';
 import toast from 'react-hot-toast';
 import Navbar from '../components/Navbar';
 import AiInsightsCard from '../components/AiInsightsCard';
-import { formatReadingDate, getLocalTodayString } from '../utils/date';
+import {
+  formatReadingDate,
+  getLocalTodayString,
+  shiftDays,
+  shiftMonths,
+} from '../utils/date';
 import { StatCardSkeleton, ChartSkeleton } from '../components/Skeleton';
 import { exportReadingsToCsv } from '../utils/exportCsv';
 import {
@@ -115,8 +120,9 @@ export default function ReportsPage() {
           </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-wrap gap-4 items-center justify-between">
-          <div className="flex flex-wrap items-center gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 shadow-xs space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            {/* Report Mode Tabs */}
             <div className="flex gap-2">
               {[
                 { key: 'daily', label: 'Daily' },
@@ -128,7 +134,7 @@ export default function ReportsPage() {
                   onClick={() => setReportType(t.key)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     reportType === t.key
-                      ? 'bg-sky-500 text-white'
+                      ? 'bg-sky-500 text-white shadow-xs'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
@@ -136,38 +142,125 @@ export default function ReportsPage() {
                 </button>
               ))}
             </div>
-            <input
-              type="date"
-              aria-label="Report reference date"
-              value={date}
-              max={todayStr}
-              onChange={(e) => {
-                if (e.target.value) setDate(e.target.value);
-              }}
-              className="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-400 text-sm"
-            />
+
+            {/* Actions: Range badge + CSV export */}
+            <div className="flex items-center gap-3">
+              {rangeText && (
+                <span className="text-xs font-medium text-gray-600 bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg">
+                  {reportType === 'monthly' ? 'Previous Month: ' : 'Range: '}
+                  <strong>{rangeText}</strong>
+                </span>
+              )}
+              {report?.readings?.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    exportReadingsToCsv(
+                      report.readings,
+                      `sweety-report-${reportType}-${date}.csv`
+                    )
+                  }
+                  className="text-xs font-medium bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
+                  title="Download report as CSV spreadsheet"
+                >
+                  <span>📥</span> Export CSV
+                </button>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            {rangeText && (
-              <span className="text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">
-                Range: {rangeText}
-              </span>
-            )}
-            {report?.readings?.length > 0 && (
+
+          {/* Date Selector Row with Steppers and Quick Presets */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-gray-100">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-gray-500">Date:</span>
               <button
                 type="button"
-                onClick={() =>
-                  exportReadingsToCsv(
-                    report.readings,
-                    `sweety-report-${reportType}-${date}.csv`
-                  )
-                }
-                className="text-xs font-medium bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
-                title="Download report as CSV spreadsheet"
+                onClick={() => {
+                  const newDate =
+                    reportType === 'daily'
+                      ? shiftDays(date || todayStr, -1)
+                      : shiftMonths(date || todayStr, -1);
+                  setDate(newDate);
+                }}
+                className="px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 text-xs font-semibold transition shadow-xs"
+                title={reportType === 'daily' ? 'Previous day' : 'Previous month'}
+                aria-label={reportType === 'daily' ? 'Previous day' : 'Previous month'}
               >
-                <span>📥</span> Export CSV
+                ◀
               </button>
-            )}
+
+              <div className="relative">
+                <input
+                  type="date"
+                  aria-label="Report reference date"
+                  value={date}
+                  max={todayStr}
+                  onClick={(e) => {
+                    try {
+                      e.target.showPicker?.();
+                    } catch {}
+                  }}
+                  onChange={(e) => setDate(e.target.value || todayStr)}
+                  className="px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400 text-xs font-medium cursor-pointer shadow-xs"
+                />
+              </div>
+
+              <button
+                type="button"
+                disabled={date >= todayStr}
+                onClick={() => {
+                  const newDate =
+                    reportType === 'daily'
+                      ? shiftDays(date || todayStr, 1)
+                      : shiftMonths(date || todayStr, 1);
+                  setDate(newDate > todayStr ? todayStr : newDate);
+                }}
+                className="px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 text-xs font-semibold transition shadow-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                title={reportType === 'daily' ? 'Next day' : 'Next month'}
+                aria-label={reportType === 'daily' ? 'Next day' : 'Next month'}
+              >
+                ▶
+              </button>
+            </div>
+
+            {/* Quick Presets */}
+            <div className="flex items-center gap-1.5 text-xs">
+              <span className="text-[11px] text-gray-400 font-medium">Quick Select:</span>
+              <button
+                type="button"
+                onClick={() => setDate(todayStr)}
+                className={`px-2.5 py-1 rounded transition text-xs ${
+                  date === todayStr
+                    ? 'bg-sky-500 text-white font-medium shadow-xs'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                onClick={() => setDate(shiftDays(todayStr, -1))}
+                className={`px-2.5 py-1 rounded transition text-xs ${
+                  date === shiftDays(todayStr, -1)
+                    ? 'bg-sky-500 text-white font-medium shadow-xs'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Yesterday
+              </button>
+              <button
+                type="button"
+                onClick={() => setDate('2026-11-12')}
+                className={`px-2.5 py-1 rounded transition text-xs flex items-center gap-1 ${
+                  date === '2026-11-12'
+                    ? 'bg-emerald-600 text-white font-medium shadow-xs'
+                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                }`}
+                title="Jump to seeded sample data date (12 Nov 2026)"
+              >
+                <span>📊</span> 12 Nov (Sample Data)
+              </button>
+            </div>
           </div>
         </div>
 

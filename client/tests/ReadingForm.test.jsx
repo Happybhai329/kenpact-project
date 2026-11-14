@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ReadingForm from '../src/components/ReadingForm';
 import api from '../src/api/axios';
-import { getLocalTodayString } from '../src/utils/date';
+import { getLocalTodayString, shiftDays } from '../src/utils/date';
 
 vi.mock('../src/api/axios', () => ({
   default: {
@@ -149,5 +149,16 @@ describe('ReadingForm', () => {
       });
       expect(onSuccess).toHaveBeenCalled();
     });
+  });
+
+  it('updates the date field when quick preset buttons are clicked', async () => {
+    const user = userEvent.setup();
+    render(<ReadingForm onSuccess={onSuccess} onCancel={onCancel} />);
+
+    const dateInput = screen.getByLabelText(/date/i);
+    const yesterdayBtn = screen.getByRole('button', { name: /^yesterday$/i });
+
+    await user.click(yesterdayBtn);
+    expect(dateInput.value).toBe(shiftDays(getLocalTodayString(), -1));
   });
 });
